@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 900
+    
+Resources:
+  AWSServerless:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./cfusion/bin/dist/cf-aws-serverless.zip #Point to the deployment zip, relative to the current folder
+      Handler: coldfusion.serverless.handlers.cf.CFLambdaRequestStreamHandler::handleRequest #Handler for synchronous workflows. "handleEventRequest" is the method name for asynchronous workflows
+      Runtime: java11
+      MemorySize: 3008
+      Environment:
+      #Include the templateHandler environment variable only for asynchronous events
+        Variables:
+          PG_DB_USER: '{{resolve:ssm:/acf/postgres/DB_USER:1}}'
+          PG_DB_PASS: '{{resolve:ssm:/acf/postgres/DB_PASS:1}}'
+          MSSQL_DB_USER: '{{resolve:ssm:/acf/mssql/DB_USER:1}}'
+          MSSQL_DB_PASS: '{{resolve:ssm:/acf/mssql/DB_PASS:1}}'
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: any
+      VpcConfig:
+        SecurityGroupIds: 
+          - sg-{yourSG}
+        SubnetIds: 
+          - subnet-{yourSubnet}
+          - subnet-{yourSubnet}
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ACFAPI:
+    Description: "API Gateway endpoint URL for Prod stage for ACF Dump example"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/index.cfm"

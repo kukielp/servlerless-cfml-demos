@@ -1,0 +1,14 @@
+version: '3'
+services:
+  acf:
+    image: eaps-docker-coldfusion.bintray.io/cf/coldfusion:latest
+    ports: 
+      - "8500:8500"
+    container_name: cfml-2020
+    environment:
+      - acceptEULA=YES
+      - installModules=postgresql,sqlserver,awsdynamodb,awssns,awssqs,debugger,awss3
+    env_file:
+      - ./config/.env
+    volumes:
+      - ./www:/app

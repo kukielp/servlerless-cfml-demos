@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 900
+    
+Resources:
+  AWSServerless:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./cfusion/bin/dist/cf-aws-serverless.zip #Point to the deployment zip, relative to the current folder
+      Handler: coldfusion.serverless.handlers.cf.CFLambdaRequestStreamHandler::handleEventRequest #Handler for synchronous workflows. "handleEventRequest" is the method name for asynchronous workflows
+      Runtime: java11
+      MemorySize: 3008
+      Environment:
+      #Include the templateHandler environment variable only for asynchronous events
+        Variables:
+            eventHandler: asyncEvent::serverlessEvent
+            TESTACCESS_KEY: '{{resolve:ssm:/acf/user/key:1}}'
+            TESTSECRET_KEY: '{{resolve:ssm:/acf/user/secret:1}}'
+            DB_USER: '{{resolve:ssm:/acf/postgres/DB_USER:1}}'
+            DB_PASS: '{{resolve:ssm:/acf/postgres/DB_PASS:1}}'
+      VpcConfig:
+        SecurityGroupIds: 
+          - sg-{yourSG}
+        SubnetIds: 
+          - subnet-{yourSubnet}
+          - subnet-{yourSubnet}
